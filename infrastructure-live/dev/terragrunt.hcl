@@ -21,8 +21,6 @@ remote_state {
 
 inputs = {
   ### PROVIDER PARAMETERS
-  # set eks parameters after provision eks
-  eks_cluster_endpoint = "https://7E646C147F5308052DBAD002E63C8029.gr7.eu-west-2.eks.amazonaws.com"
   eks_cluster_id       = "test-eks-irsa"
 }
 
