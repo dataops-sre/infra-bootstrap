@@ -1,4 +1,4 @@
-# DATA platform terragrunt bootstrap
+# Data platform terragrunt bootstrap
 
 This repository bootstrap a scalable Managed Kubernetes cluster(EKS) on AWS with terragrunt
 
@@ -49,6 +49,8 @@ helm_release.aiflow: Creation complete after 1m40s [id=airflow]
 
 Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
 ...
+...
+terragrunt-dataplaform-bootstrap (git)-[main] % aws eks --region eu-west-2 update-kubeconfig --name test-eks-irsa --role-arn "arn:aws:iam::xxxxxx:role/xxxxxx"
 $terragrunt-dataplaform-bootstrap (git)-[main] % kubectl get pod -n kube-system
 NAME                                                        READY   STATUS    RESTARTS   AGE
 aws-node-rtts8                                              1/1     Running   0          2m46s
