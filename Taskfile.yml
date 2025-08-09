@@ -1,15 +1,22 @@
 # https://taskfile.dev
-
-version: '2'
+version: "3"
 
 env:
-  TERRAGRUNT_VERSION: '0.13.5-eks'
+  TERRAGRUNT_VERSION: "ot-1.10.3-tg-0.83.2"
 
 tasks:
-
   run-image:
     cmds:
-      - docker run -it -v `pwd`:/mnt -w="/mnt" -v ~/.aws/:/root/.aws/ -e AWS_PROFILE -e TF_VAR_kubernetes_cluster_ca_certificate -e TF_VAR_datadog_api_key -e TF_VAR_datadog_app_key --user=root --rm alpine/terragrunt:$TERRAGRUNT_VERSION bash
+      - >
+        docker run
+        --tty --interactive
+        --env AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
+        --env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        --env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        --env AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
+        --user $(id -u):$(id -g)
+        --volume $(pwd):/data
+        --rm devopsinfra/docker-terragrunt:$TERRAGRUNT_VERSION bash
 
   format-all:
     cmds:
