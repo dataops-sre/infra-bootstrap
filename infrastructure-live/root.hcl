@@ -45,7 +45,7 @@ remote_state {
   }
 }
 
-prevent_destroy = true
+prevent_destroy = false
 
 # Configure root level variables that all resources can inherit. This is especially helpful with multi-account configs
 # where terraform_remote_state data sources are placed directly into the modules.
