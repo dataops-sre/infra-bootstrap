@@ -1,40 +1,82 @@
-# https://taskfile.dev
+# Taskfile.yml
 version: "3"
 
-env:
-  TERRAGRUNT_VERSION: "ot-1.10.3-tg-0.83.2"
+vars:
+  # The Docker image to use for all commands.
+  TERRAGRUNT_IMAGE: "devopsinfra/docker-terragrunt:ot-1.10.3-tg-0.83.2"
+
+  # The base directory for your live infrastructure code.
+  # All commands will be relative to this path.
+  BASE_DIR: "infrastructure-live/provider_aws/dev"
 
 tasks:
-  run-image:
+  # ---------------------------------------------------------------------------
+  # Core Docker Execution Task (Internal)
+  # ---------------------------------------------------------------------------
+  # This is a hidden helper task that wraps the docker run command.
+  # All other tasks will call this one.
+  _run:
+    internal: true
     cmds:
-      - >
-        docker run
-        --tty --interactive
-        --env AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}
-        --env AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-        --env AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-        --env AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN}
-        --user $(id -u):$(id -g)
-        --volume $(pwd):/data
-        --rm devopsinfra/docker-terragrunt:$TERRAGRUNT_VERSION bash
+      - |
+        docker run \
+          --tty --interactive \
+          --env AWS_REGION \
+          --env AWS_DEFAULT_REGION \
+          --env AWS_ACCESS_KEY_ID \
+          --env AWS_SECRET_ACCESS_KEY \
+          --env AWS_SESSION_TOKEN \
+          --user $(id -u):$(id -g) \
+          --volume {{.USER_WORKING_DIR}}:/data \
+          --workdir /data \
+          --rm {{.TERRAGRUNT_IMAGE}} \
+          sh -c "{{.CLI_ARGS}}"
 
-  format-all:
-    cmds:
-      - terragrunt hclfmt
-      - terraform fmt -recursive
+  # ---------------------------------------------------------------------------
+  # Terragrunt Commands (User-Facing)
+  # ---------------------------------------------------------------------------
+  # These are the tasks you will run from your command line.
 
-  clean-all:
+  fmt:
+    desc: "Checks formatting for all Terragrunt and Terraform files."
+    dir: "{{.BASE_DIR}}"
     cmds:
-      - find . -type d -name ".terragrunt-cache" -prune -exec rm -rf {} \;
-      - find . -type d -name ".terraform" -prune -prune -exec rm -rf {} \;
-      - find . -type f -name "terraform.tfstate*" -prune -exec rm -rf {} \;
+      - task: _run
+        vars:
+          CLI_ARGS: "terragrunt hcl format --all && terragrunt fmt --all --check"
 
-  plan-sequential:
-    deps: [clean-all]
+  validate:
+    desc: "Initializes and validates all modules."
+    dir: "{{.BASE_DIR}}"
     cmds:
-      - find {{.MY_TERRAGRUNT_WORKING_DIR}} -type f \( -iname "terragrunt.hcl" ! -iwholename "{{.MY_TERRAGRUNT_WORKING_DIR}}/terragrunt.hcl" \) -prune -exec sh -c 'echo "#####"; echo $(dirname "{}"); echo "#####"; terragrunt plan --terragrunt-non-interactive --terragrunt-working-dir $(dirname "{}")' \;
+      - task: _run
+        vars:
+          CLI_ARGS: "terragrunt run-all init -reconfigure && terragrunt run-all validate"
 
-  apply-sequential:
-    deps: [clean-all]
+  plan:
+    desc: "Generates an execution plan for all modules."
+    dir: "{{.BASE_DIR}}"
     cmds:
-      - find {{.MY_TERRAGRUNT_WORKING_DIR}} -type f \( -iname "terragrunt.hcl" ! -iwholename "{{.MY_TERRAGRUNT_WORKING_DIR}}/terragrunt.hcl" \) -prune -exec sh -c 'echo "#####"; echo $(dirname "{}"); echo "#####"; terragrunt apply -auto-approve --terragrunt-non-interactive --terragrunt-working-dir $(dirname "{}")' \;
+      - task: _run
+        vars:
+          CLI_ARGS: "terragrunt run-all plan"
+
+  apply:
+    desc: "Applies the changes for all modules."
+    dir: "{{.BASE_DIR}}"
+    cmds:
+      - echo "You are about to apply changes to the live infrastructure."
+      - task: _run
+        vars:
+          CLI_ARGS: "terragrunt run-all apply --auto-approve"
+
+  # ---------------------------------------------------------------------------
+  # Utility Task
+  # ---------------------------------------------------------------------------
+  shell:
+    desc: "Starts an interactive shell inside the Terragrunt container."
+    dir: "{{.BASE_DIR}}"
+    cmds:
+      - task: _run
+        vars:
+          CLI_ARGS: "bash"
