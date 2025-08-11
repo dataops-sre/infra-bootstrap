@@ -14,7 +14,7 @@ inputs = {
   host                   = dependency.kubernetes_cluster.outputs.cluster_endpoint
   cluster_ca_certificate = base64decode(dependency.kubernetes_cluster.outputs.cluster_certificate_authority_data)
 
-  cluster_name           = dependency.kubernetes_cluster.outputs.cluster_name
+  cluster_name = dependency.kubernetes_cluster.outputs.cluster_name
 
   groups = [
     {

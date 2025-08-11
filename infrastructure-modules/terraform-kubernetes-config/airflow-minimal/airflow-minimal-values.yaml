@@ -1,0 +1,58 @@
+# ---------------------------------------------------------------------------------
+# A minimal values.yaml for a lightweight, single-pod style Airflow deployment.
+# Perfect for local development and testing.
+# ---------------------------------------------------------------------------------
+
+# 1. Set the executor to LocalExecutor.
+# This is the most important change. It runs all tasks within the scheduler pod,
+# eliminating the need for separate worker pods.
+executor: LocalExecutor
+
+# 2. Disable all non-essential components.
+# We don't need separate workers, a triggerer for deferrable tasks, or statsd for metrics.
+workers:
+  replicas: 0
+triggerer:
+  enabled: false
+statsd:
+  enabled: false
+# The dagProcessor is not needed when using the LocalExecutor.
+dagProcessor:
+  enabled: false
+
+# 3. Disable Redis.
+# Redis is the message broker for CeleryExecutor and is not needed for LocalExecutor.
+redis:
+  enabled: false
+
+# 4. Configure the built-in PostgreSQL database.
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "insecure-postgres-password" # Please change this
+    username: "airflow"
+    password: "insecure-airflow-password" # Please change this
+    database: "airflow"
+
+# 5. Configure how DAGs are loaded.
+# Using git-sync is a common and convenient method for development.
+dags:
+  # Disable persistent volume for DAGs, as we will sync them from Git.
+  persistence:
+    enabled: false
+  # Enable git-sync to clone your DAGs from a repository.
+  gitSync:
+    enabled: true
+    # The git repository containing your DAGs
+    repo: "https://github.com/apache/airflow.git"
+    # The branch, tag, or commit hash to check out
+    ref: "main"
+    # The sub-path within the repo where the DAGs are located.
+    # Use "" if DAGs are at the root of the repo.
+    subPath: "tests/dags"
+
+# 6. Configure logs.
+# This uses an ephemeral 'emptyDir' volume, which is perfect for a minimal setup.
+logs:
+  persistence:
+    enabled: false
