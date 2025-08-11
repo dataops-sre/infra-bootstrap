@@ -4,6 +4,14 @@ This repository provides a ready-to-use **Infrastructure as Code (IaC) bootstrap
 
 It supports spot instances, autoscales based on cluster load, **configures AWS budget alerting**, and is designed to make use of AWS Free Tier resources as much as possible.
 
+All tooling (Terraform, Terragrunt, AWS CLI helpers) is packaged in a Docker image:
+[`devopsinfra/docker-terragrunt`](https://hub.docker.com/r/devopsinfra/docker-terragrunt)
+This ensures:
+- **No manual local installs** required
+- **Consistent developer environments**
+- **Identical local and CI environments**
+
+
 ## Components
 Infrastructure components:
 
@@ -24,6 +32,9 @@ The project use the standard terragrunt project structure, detailed explication 
 * AWS CLI configured with necessary permissions
 * **Docker & Docker Compose `3.x`**: For creating consistent, reproducible environments for the application, tests, and development (Jupyter).
 * **Taskfile**: A simple, `make`-like build tool for automating common commands (e.g., running the job, tests).
+
+> **Note:** You do **not** need to install Terraform or Terragrunt locally.
+> All commands run inside `devopsinfra/docker-terragrunt` to guarantee consistent versions between local and CI.
 
 
 ## Typical local workflow
