@@ -5,9 +5,9 @@ vars:
   # The Docker image to use for all commands.
   TERRAGRUNT_IMAGE: "devopsinfra/docker-terragrunt:ot-1.10.3-tg-0.83.2"
 
-  # The base directory for your live infrastructure code.
   # All commands will be relative to this path.
   BASE_DIR: "infrastructure-live/provider_aws/dev"
+  DOCKER_INTERACTIVE_FLAGS: ""
 
 tasks:
   # ---------------------------------------------------------------------------
@@ -20,7 +20,7 @@ tasks:
     cmds:
       - |
         docker run \
-          --tty --interactive \
+          {{.DOCKER_INTERACTIVE_FLAGS}} \
           --env AWS_REGION \
           --env AWS_DEFAULT_REGION \
           --env AWS_ACCESS_KEY_ID \
@@ -43,7 +43,7 @@ tasks:
     cmds:
       - task: _run
         vars:
-          CLI_ARGS: "terragrunt hcl format --all && terragrunt fmt --all --check"
+          CLI_ARGS: "terragrunt hcl format --all && tofu fmt -recursive -check ./infrastructure-modules"
 
   validate:
     desc: "Initializes and validates all modules."
@@ -79,4 +79,5 @@ tasks:
     cmds:
       - task: _run
         vars:
+          DOCKER_INTERACTIVE_FLAGS: "--tty --interactive"
           CLI_ARGS: "bash"
