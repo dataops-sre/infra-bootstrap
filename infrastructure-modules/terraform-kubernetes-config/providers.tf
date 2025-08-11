@@ -7,7 +7,7 @@ terraform {
     }
     helm = {
       source  = "hashicorp/helm"
-      version = "3.0.1"
+      version = "2.17.0"
     }
   }
 }
@@ -24,7 +24,7 @@ provider "kubernetes" {
 
 
 provider "helm" {
-  kubernetes = {
+  kubernetes {
     host                   = var.host
     cluster_ca_certificate = var.cluster_ca_certificate
     token                  = data.aws_eks_cluster_auth.this.token
