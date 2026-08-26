@@ -5,8 +5,9 @@ vars:
   # The Docker image to use for all commands.
   TERRAGRUNT_IMAGE: "devopsinfra/docker-terragrunt:ot-1.10.3-tg-0.83.2"
 
-  # All commands will be relative to this path.
-  BASE_DIR: "infrastructure-live/provider_aws/dev"
+  # All commands will be relative to this path. Override with TASK_BASE_DIR,
+  # e.g. TASK_BASE_DIR=infrastructure-live/provider_cloudflare/live/dnshe_domain task plan
+  BASE_DIR: '{{.TASK_BASE_DIR | default "infrastructure-live/provider_aws/dev"}}'
   DOCKER_INTERACTIVE_FLAGS: ""
 
 tasks:
@@ -26,10 +27,13 @@ tasks:
           --env AWS_ACCESS_KEY_ID \
           --env AWS_SECRET_ACCESS_KEY \
           --env AWS_SESSION_TOKEN \
+          --env CLOUDFLARE_API_TOKEN \
+          --env DNSHE_API_KEY \
+          --env DNSHE_API_SECRET \
           --env HELM_CACHE_HOME=/tmp/helm \
           --user $(id -u):$(id -g) \
           --volume {{.USER_WORKING_DIR}}:/data \
-          --workdir /data \
+          --workdir /data/{{.BASE_DIR}} \
           --rm {{.TERRAGRUNT_IMAGE}} \
           sh -c "{{.CLI_ARGS}}"
 
@@ -40,11 +44,10 @@ tasks:
 
   fmt:
     desc: "Checks formatting for all Terragrunt and Terraform files."
-    dir: "{{.BASE_DIR}}"
     cmds:
       - task: _run
         vars:
-          CLI_ARGS: "terragrunt hcl format --all && tofu fmt -recursive -check ./infrastructure-modules"
+          CLI_ARGS: "cd /data && terragrunt hcl format --all && tofu fmt -recursive -check infrastructure-modules"
 
   validate:
     desc: "Initializes and validates all modules."
@@ -61,6 +64,7 @@ tasks:
       - task: _run
         vars:
           CLI_ARGS: "terragrunt run-all plan"
+          DOCKER_INTERACTIVE_FLAGS: "--tty --interactive"
 
   apply:
     desc: "Applies the changes for all modules."
@@ -70,6 +74,7 @@ tasks:
       - task: _run
         vars:
           CLI_ARGS: "terragrunt run-all apply --auto-approve"
+          DOCKER_INTERACTIVE_FLAGS: "--tty --interactive"
 
   # ---------------------------------------------------------------------------
   # Utility Task

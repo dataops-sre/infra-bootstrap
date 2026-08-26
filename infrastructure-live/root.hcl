@@ -7,7 +7,8 @@ locals {
   account_vars = read_terragrunt_config(find_in_parent_folders("account.hcl"))
 
   # Extract the variables we need for easy access
-  aws_region   = local.account_vars.locals.aws_region
+  # Falls back to eu-west-1 for provider trees without an aws_region (e.g. cloudflare)
+  aws_region   = try(local.account_vars.locals.aws_region, "eu-west-1")
   environment  = local.account_vars.locals.environment
   # Serialize provider_wide_tags into a format suitable for the provider block
   provider_tags = jsonencode(local.provider_vars.locals.provider_wide_tags)
